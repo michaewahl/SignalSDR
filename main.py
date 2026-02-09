@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 SignalSDR Main Loop.
 
@@ -29,7 +31,7 @@ from dotenv import load_dotenv
 from signalsdr.analyzer import analyze_text
 from signalsdr.config import SCRAPE_DELAY_SECONDS
 from signalsdr.drafter import generate_draft
-from signalsdr.output import append_to_csv, send_slack_notification
+from signalsdr.output import append_to_csv, append_to_markdown, send_slack_notification
 from signalsdr.scraper import fetch_page
 from signalsdr.state import record_scan, should_scan
 
@@ -129,6 +131,7 @@ async def run_pipeline(
 
                         # --- Feature C: Output ---
                         append_to_csv(draft, url, output_path)
+                        append_to_markdown(draft, url)
                         send_slack_notification(draft)
                     elif draft.success and not draft.is_valid:
                         # LLM intentionally returned null = false positive filtered

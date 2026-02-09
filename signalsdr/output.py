@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 SignalSDR Output Module (Feature C from spec).
 
@@ -10,6 +12,7 @@ import csv
 import json
 import os
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -18,6 +21,7 @@ from signalsdr.drafter import EmailDraft
 
 
 OUTPUT_CSV_HEADERS = [
+    "timestamp",
     "company",
     "role_detected",
     "draft_subject",
@@ -53,6 +57,7 @@ def append_to_csv(
             writer.writeheader()
 
         writer.writerow({
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "company": draft.company,
             "role_detected": draft.role,
             "draft_subject": draft.subject_line or "",
@@ -61,6 +66,27 @@ def append_to_csv(
             "model": draft.model,
             "url": url,
         })
+
+
+def append_to_markdown(
+    draft: EmailDraft,
+    url: str,
+    output_path: str | Path = "drafts_output.md",
+) -> None:
+    """Append a draft as a readable markdown section."""
+    output_path = Path(output_path)
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    is_new = not output_path.exists()
+
+    with open(output_path, "a", encoding="utf-8") as f:
+        if is_new:
+            f.write("# SignalSDR Drafts\n\n")
+
+        f.write(f"## {draft.company} — {draft.role}\n")
+        f.write(f"**Subject:** {draft.subject_line}\n\n")
+        f.write(f"{draft.body}\n\n")
+        f.write(f"*{ts} | {draft.model} | [source]({url})*\n\n")
+        f.write("---\n\n")
 
 
 def send_slack_notification(

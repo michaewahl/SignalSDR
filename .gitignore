@@ -21,3 +21,5 @@ tests/
 
 # SignalSDR runtime data
 drafts_output.csv
+drafts_output.md
+data/signalsdr.log

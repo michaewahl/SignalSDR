@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 SignalSDR Drafter Module (Feature B from spec).
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 SignalSDR Analyzer Module (Feature A - keyword detection from spec).
 
