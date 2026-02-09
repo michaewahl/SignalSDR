@@ -11,8 +11,11 @@ directly - it only writes drafts for human review.
 import csv
 import json
 import os
+import smtplib
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
 
 import requests
@@ -121,4 +124,57 @@ def send_slack_notification(
         )
         return resp.status_code == 200
     except requests.RequestException:
+        return False
+
+
+def send_email_report(
+    stats: dict,
+    md_path: str | Path = "drafts_output.md",
+) -> bool:
+    """
+    Email the markdown drafts report after a pipeline run.
+
+    Requires two env vars:
+        GMAIL_ADDRESS      - your Gmail address
+        GMAIL_APP_PASSWORD - a Gmail App Password (not your regular password)
+
+    Optionally set GMAIL_RECIPIENT to send to a different address.
+
+    Returns True if the email was sent successfully.
+    """
+    sender = os.environ.get("GMAIL_ADDRESS")
+    app_pw = os.environ.get("GMAIL_APP_PASSWORD")
+    if not sender or not app_pw:
+        return False
+
+    recipient = os.environ.get("GMAIL_RECIPIENT", sender)
+    md_path = Path(md_path)
+
+    if not md_path.exists():
+        return False
+
+    body = md_path.read_text(encoding="utf-8")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    subject = f"\U0001f4e1 SignalSDR Report — {today}"
+
+    if stats.get("drafts", 0) > 0:
+        subject += f" — {stats['drafts']} new draft(s)"
+    elif stats.get("signals", 0) == 0:
+        subject += " — no new signals"
+
+    msg = MIMEMultipart("alternative")
+    msg["From"] = sender
+    msg["To"] = recipient
+    msg["Subject"] = subject
+
+    # Plain text fallback
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender, app_pw)
+            server.sendmail(sender, recipient, msg.as_string())
+        return True
+    except smtplib.SMTPException:
         return False

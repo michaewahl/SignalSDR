@@ -31,7 +31,7 @@ from dotenv import load_dotenv
 from signalsdr.analyzer import analyze_text
 from signalsdr.config import SCRAPE_DELAY_SECONDS
 from signalsdr.drafter import generate_draft
-from signalsdr.output import append_to_csv, append_to_markdown, send_slack_notification
+from signalsdr.output import append_to_csv, append_to_markdown, send_email_report, send_slack_notification
 from signalsdr.scraper import fetch_page
 from signalsdr.state import record_scan, should_scan
 
@@ -56,6 +56,7 @@ async def run_pipeline(
     db_path: str = "data/db.json",
     model: str = "openai/gpt-4o",
     dry_run: bool = False,
+    send_email: bool = True,
 ) -> dict:
     """
     Run the full SignalSDR pipeline.
@@ -64,6 +65,11 @@ async def run_pipeline(
     """
     targets = load_targets(targets_path)
     db = Path(db_path)
+
+    # Reset markdown output so each run's email only contains fresh drafts
+    md_path = Path("drafts_output.md")
+    if md_path.exists():
+        md_path.unlink()
 
     stats = {"scanned": 0, "skipped": 0, "signals": 0, "drafts": 0, "filtered": 0, "errors": 0}
 
@@ -162,6 +168,13 @@ async def run_pipeline(
     print(f"  Filtered: {stats['filtered']} (false positives caught by LLM)")
     print(f"  Errors:  {stats['errors']}")
 
+    # --- Email report ---
+    if send_email and not dry_run:
+        if send_email_report(stats):
+            print("  Email report sent")
+        else:
+            print("  Email report skipped (GMAIL_ADDRESS / GMAIL_APP_PASSWORD not set)")
+
     return stats
 
 
@@ -174,6 +187,7 @@ def main():
     parser.add_argument("--db", default="data/db.json", help="Path to state database")
     parser.add_argument("--model", default="openai/gpt-4o", help="LLM model (litellm format)")
     parser.add_argument("--dry-run", action="store_true", help="Scan only, skip LLM drafting")
+    parser.add_argument("--no-email", action="store_true", help="Skip email report after run")
     args = parser.parse_args()
 
     asyncio.run(run_pipeline(
@@ -182,6 +196,7 @@ def main():
         db_path=args.db,
         model=args.model,
         dry_run=args.dry_run,
+        send_email=not args.no_email,
     ))
 
 
