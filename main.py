@@ -366,7 +366,11 @@ async def run_pipeline(
         if send_email_report(combined):
             print("  Email report sent")
         else:
-            print("  Email report skipped (GMAIL_ADDRESS / GMAIL_APP_PASSWORD not set)")
+            import os
+            if not os.environ.get("GMAIL_ADDRESS") or not os.environ.get("GMAIL_APP_PASSWORD"):
+                print("  Email report skipped (GMAIL_ADDRESS / GMAIL_APP_PASSWORD not set)")
+            else:
+                print("  Email report skipped (no new drafts to report)")
 
     return combined
 
