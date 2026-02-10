@@ -54,6 +54,8 @@
 ```
 SignalSDR/
 ├── main.py                          # CLI orchestration (hiring + prospect pipelines)
+├── company.json                     # Your company identity — gitignored (copy company.example.json)
+├── company.example.json             # Acme Corp placeholder (committed)
 ├── targets.csv                      # Target companies — gitignored (copy targets.example.csv)
 ├── targets.example.csv              # Example targets file (committed)
 ├── run_daily.sh                     # Cron wrapper script
@@ -67,7 +69,7 @@ SignalSDR/
 │   ├── scraper.py                   # BeautifulSoup page fetcher
 │   ├── analyzer.py                  # Keyword signal detection (hiring)
 │   ├── prospector.py                # Brave Search + news page scraping (prospect)
-│   ├── drafter.py                   # LLM email drafter via litellm
+│   ├── drafter.py                   # LLM email drafter (loads company.json)
 │   ├── output.py                    # CSV/markdown writer, Slack, Gmail
 │   └── state.py                     # db.json state management (24h cooldown)
 ├── nanobot/                         # Forked nanobot framework
@@ -78,7 +80,8 @@ SignalSDR/
 │   │       └── prospect_scanner.py  # Nanobot tool: prospect signal scanner
 │   └── skills/
 │       └── signalsdr/
-│           └── SKILL.md             # Nanobot skill (always=true)
+│           ├── SKILL.md             # Nanobot skill — gitignored (copy SKILL.example.md)
+│           └── SKILL.example.md     # Acme Corp placeholder skill (committed)
 ├── .env                             # API keys (gitignored, copy .env.example)
 └── .env.example                     # Placeholder API keys (committed)
 ```

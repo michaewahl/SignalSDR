@@ -1,0 +1,12 @@
+{
+  "name": "Acme Corp",
+  "url": "www.acmecorp.com",
+  "products": [
+    "Technical documentation & service information (repair manuals, owner guides)",
+    "Electronic parts catalogs & wiring diagrams",
+    "Diagnostic tools & guided diagnostics",
+    "Interactive training & eLearning for technicians",
+    "Content management systems & service portals"
+  ],
+  "industries": "automotive, EV, heavy equipment, aerospace, defense, powersports, RVs"
+}

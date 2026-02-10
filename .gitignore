@@ -25,3 +25,7 @@ data/db.json
 drafts_output.csv
 drafts_output.md
 data/signalsdr.log
+
+# Company-specific config (copy from *.example.* files)
+company.json
+nanobot/skills/signalsdr/SKILL.md

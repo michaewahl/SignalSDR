@@ -9,26 +9,59 @@ This is the "brain" of the agent.
 """
 
 import json
+import os
 from dataclasses import dataclass
+from pathlib import Path
 
 from litellm import acompletion
 
 
-SYSTEM_PROMPT = """\
-You are an expert SDR (Sales Development Representative) for Acme Corp \
-(www.acmecorp.com), a leader in product information and technical documentation.
+# ---------------------------------------------------------------------------
+# Load company identity from company.json (gitignored).
+# Falls back to Acme Corp defaults if the file is missing.
+# ---------------------------------------------------------------------------
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_COMPANY_JSON = _PROJECT_ROOT / "company.json"
 
-Acme Corp helps OEMs and manufacturers with:
-- Technical documentation & service information (repair manuals, owner guides)
-- Electronic parts catalogs & wiring diagrams
-- Diagnostic tools & guided diagnostics
-- Interactive training & eLearning for technicians
-- Content management systems & service portals
+_DEFAULT_COMPANY = {
+    "name": "Acme Corp",
+    "url": "www.acmecorp.com",
+    "products": [
+        "Technical documentation & service information (repair manuals, owner guides)",
+        "Electronic parts catalogs & wiring diagrams",
+        "Diagnostic tools & guided diagnostics",
+        "Interactive training & eLearning for technicians",
+        "Content management systems & service portals",
+    ],
+    "industries": "automotive, EV, heavy equipment, aerospace, defense, powersports, RVs",
+}
 
-Industries: automotive, EV, heavy equipment, aerospace, defense, powersports, RVs.
 
-Trigger: {company} is hiring for {role}.
-Task: Write a short 3-sentence cold email connecting this hire to how Acme Corp \
+def _load_company() -> dict:
+    if _COMPANY_JSON.exists():
+        with open(_COMPANY_JSON) as f:
+            return json.load(f)
+    return _DEFAULT_COMPANY
+
+
+COMPANY = _load_company()
+_CO = COMPANY["name"]
+_URL = COMPANY["url"]
+_PRODUCTS = "\n".join(f"- {p}" for p in COMPANY["products"])
+_INDUSTRIES = COMPANY["industries"]
+
+
+SYSTEM_PROMPT = f"""\
+You are an expert SDR (Sales Development Representative) for {_CO} \
+({_URL}), a leader in product information and technical documentation.
+
+{_CO} helps OEMs and manufacturers with:
+{_PRODUCTS}
+
+Industries: {_INDUSTRIES}.
+
+Trigger: {{company}} is hiring for {{role}}.
+Task: Write a short 3-sentence cold email connecting this hire to how {_CO} \
 can support their documentation, service, or training needs. Be specific to the role.
 Tone: Professional, direct, no fluff.
 
@@ -43,27 +76,23 @@ You MUST respond with valid JSON only, no markdown, no explanation:
 {{"subject_line": "...", "body": "..."}}
 """
 
-PROSPECT_SYSTEM_PROMPT = """\
-You are an expert SDR (Sales Development Representative) for Acme Corp \
-(www.acmecorp.com), a leader in product information and technical documentation.
+PROSPECT_SYSTEM_PROMPT = f"""\
+You are an expert SDR (Sales Development Representative) for {_CO} \
+({_URL}), a leader in product information and technical documentation.
 
-Acme Corp helps OEMs and manufacturers with:
-- Technical documentation & service information (repair manuals, owner guides)
-- Electronic parts catalogs & wiring diagrams
-- Diagnostic tools & guided diagnostics
-- Interactive training & eLearning for technicians
-- Content management systems & service portals
+{_CO} helps OEMs and manufacturers with:
+{_PRODUCTS}
 
-Industries: automotive, EV, heavy equipment, aerospace, defense, powersports, RVs.
+Industries: {_INDUSTRIES}.
 
-Signal type: {category}
-Trigger: {role}
-Company: {company}
+Signal type: {{category}}
+Trigger: {{role}}
+Company: {{company}}
 
 Task: Write a compelling 3-sentence outreach email that connects this business signal \
-to how Acme Corp can help. For example:
+to how {_CO} can help. For example:
 - New model/product launch → "Every new model needs documentation, parts catalogs, \
-and technician training — Acme Corp delivers all three."
+and technician training — {_CO} delivers all three."
 - Service/technician challenges → "With the technician shortage growing, our diagnostic \
 tools and eLearning platforms help your existing team do more."
 - EV transition → "Electrification means entirely new service documentation, wiring \
@@ -76,7 +105,7 @@ Tone: Professional, direct, reference the specific signal. No fluff.
 CRITICAL RULE: Analyze the signal carefully.
 If the headline/snippet is clearly irrelevant (unrelated company, spam, \
 generic news aggregation) — return: {{"subject_line": null, "body": null}}
-Only draft when the signal is genuinely about {company}.
+Only draft when the signal is genuinely about {{company}}.
 
 You MUST respond with valid JSON only, no markdown, no explanation:
 {{"subject_line": "...", "body": "..."}}
