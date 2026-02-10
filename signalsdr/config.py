@@ -40,7 +40,7 @@ EXCLUDE_KEYWORDS = [
     "Social Security",
 ]
 
-# Prospect signal categories tailored to Tweddle Group's market
+# Prospect signal categories tailored to your company's market
 # (technical documentation, diagnostics, parts catalogs, training for OEMs)
 # {company} is replaced at runtime
 PROSPECT_CATEGORIES = {

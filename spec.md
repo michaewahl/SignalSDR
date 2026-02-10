@@ -4,19 +4,19 @@
 
 **Name:** SignalSDR
 **Type:** Headless Automation / Sidecar Agent
-**Owner:** Tweddle Group (www.tweddle.com)
+**Owner:** Configurable (see `signalsdr/drafter.py` and `nanobot/skills/signalsdr/SKILL.md`)
 **Goal:** Automate the detection of business signals (hiring, new models, EV transitions, service challenges, regulatory changes) on target OEM/manufacturer websites and generate personalized cold email drafts for BD/sales teams.
 
 **Philosophy:** Adaptable Systems. The agent only acts when a specific event changes the state of a prospect.
 
-**What Tweddle Group sells:**
+**What your company sells (example: Acme Corp):**
 - Technical documentation & service information (repair manuals, owner guides)
 - Electronic parts catalogs & wiring diagrams
-- TRACER diagnostic tools & guided diagnostics
+- Diagnostic tools & guided diagnostics
 - Interactive training & eLearning for technicians
 - Content management systems & service portals
 
-**Industries:** Automotive, EV, heavy equipment, aerospace, defense, powersports, RVs.
+**Industries (example):** Automotive, EV, heavy equipment, aerospace, defense, powersports, RVs.
 
 ## 2. Architecture: The "Time-Event-State-Loop"
 
@@ -124,7 +124,7 @@ Two signal sources:
 1. **Brave Search API** (if `BRAVE_API_KEY` set): Queries 4 categories per company with freshness filter (past week)
 2. **News page scraping** (if `news_url` configured): Fetches company blog/newsroom, matches against `NEWS_PAGE_KEYWORDS` mapped to categories. Quality filters skip tag lists, WLTP/emissions disclaimers, and generic site chrome.
 
-**Prospect categories (Tweddle-specific):**
+**Prospect categories (configurable in `signalsdr/config.py`):**
 - `new_model` — new vehicle/product/equipment launches
 - `service_challenge` — technician shortages, recalls, warranty, parts supply
 - `ev_transition` — electrification, battery, hybrid transitions
@@ -134,8 +134,8 @@ Two signal sources:
 
 ### Feature C: LLM Email Drafter
 - **Provider:** `litellm` (supports OpenAI, Anthropic, Gemini via `--model` flag)
-- **Hiring prompt:** Connects the detected role to how Tweddle can support documentation, service, or training needs
-- **Prospect prompt:** Connects business signal to specific Tweddle offering (documentation for new models, diagnostics for service challenges, training for EV transitions, compliance documentation for regulatory changes)
+- **Hiring prompt:** Connects the detected role to how your company can support documentation, service, or training needs
+- **Prospect prompt:** Connects business signal to a specific company offering (documentation for new models, diagnostics for service challenges, training for EV transitions, compliance documentation for regulatory changes)
 - **False-positive filter:** LLM returns `{subject_line: null, body: null}` for irrelevant signals (diversity statements, tag lines, spam)
 
 ### Feature D: Output & Reporting
@@ -189,7 +189,7 @@ GMAIL_RECIPIENT=team@company.com   # Optional: defaults to GMAIL_ADDRESS
 ### Skill (SKILL.md)
 - `always: true` — loaded into every agent context
 - Documents both tools with examples and workflow instructions
-- Includes Tweddle Group context and email drafting rules
+- Includes company context and email drafting rules
 - Workflow: Signal Detection → Context Gathering (Deep Dive) → Drafting → Summary
 
 ## 11. Daily Cron
