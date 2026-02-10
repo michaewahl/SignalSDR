@@ -25,6 +25,7 @@ from signalsdr.drafter import EmailDraft
 
 OUTPUT_CSV_HEADERS = [
     "timestamp",
+    "signal_type",
     "company",
     "role_detected",
     "draft_subject",
@@ -61,6 +62,7 @@ def append_to_csv(
 
         writer.writerow({
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "signal_type": draft.signal_type,
             "company": draft.company,
             "role_detected": draft.role,
             "draft_subject": draft.subject_line or "",
@@ -85,7 +87,8 @@ def append_to_markdown(
         if is_new:
             f.write("# SignalSDR Drafts\n\n")
 
-        f.write(f"## {draft.company} — {draft.role}\n")
+        badge = f" `[{draft.signal_type}]`" if draft.signal_type != "hiring" else ""
+        f.write(f"## {draft.company} — {draft.role}{badge}\n")
         f.write(f"**Subject:** {draft.subject_line}\n\n")
         f.write(f"{draft.body}\n\n")
         f.write(f"*{ts} | {draft.model} | [source]({url})*\n\n")
@@ -157,9 +160,17 @@ def send_email_report(
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     subject = f"\U0001f4e1 SignalSDR Report — {today}"
 
-    if stats.get("drafts", 0) > 0:
-        subject += f" — {stats['drafts']} new draft(s)"
-    elif stats.get("signals", 0) == 0:
+    hiring_drafts = stats.get("drafts", 0)
+    prospect_drafts = stats.get("prospect_drafts", 0)
+    total = hiring_drafts + prospect_drafts
+    if total > 0:
+        parts = []
+        if hiring_drafts:
+            parts.append(f"{hiring_drafts} hiring")
+        if prospect_drafts:
+            parts.append(f"{prospect_drafts} prospect")
+        subject += f" — {', '.join(parts)} draft(s)"
+    elif stats.get("signals", 0) == 0 and stats.get("prospect_signals", 0) == 0:
         subject += " — no new signals"
 
     msg = MIMEMultipart("alternative")

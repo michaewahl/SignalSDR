@@ -1,143 +1,207 @@
-SignalSDR: Headless MVP Specification
-1. Project Overview
-Name: SignalSDR (MVP) Type: Headless Automation / Sidecar Agent Goal: Automate the detection of "Hiring Signals" on target company websites and generate personalized cold email drafts for SDRs. Philosophy: Adaptable Systems. The agent only acts when a specific event (hiring) changes the state of the prospect.
+# SignalSDR: Full Specification
 
-2. Architecture: The "Time-Event-State-Loop"
-We are building a headless loop that runs a specific workflow.
+## 1. Project Overview
 
-Time: The script is triggered manually (CLI) or via a simple Cron (e.g., daily).
+**Name:** SignalSDR
+**Type:** Headless Automation / Sidecar Agent
+**Owner:** Tweddle Group (www.tweddle.com)
+**Goal:** Automate the detection of business signals (hiring, new models, EV transitions, service challenges, regulatory changes) on target OEM/manufacturer websites and generate personalized cold email drafts for BD/sales teams.
 
-Event (Trigger): A "Hiring Signal" is detected (e.g., keywords "Head of Sales", "VP Engineering" found on a careers page).
+**Philosophy:** Adaptable Systems. The agent only acts when a specific event changes the state of a prospect.
 
-State (Memory): A local JSON file (db.json) or Google Sheet that tracks which companies have been scanned and what signals were found.
+**What Tweddle Group sells:**
+- Technical documentation & service information (repair manuals, owner guides)
+- Electronic parts catalogs & wiring diagrams
+- TRACER diagnostic tools & guided diagnostics
+- Interactive training & eLearning for technicians
+- Content management systems & service portals
 
-Loop (Action):
+**Industries:** Automotive, EV, heavy equipment, aerospace, defense, powersports, RVs.
 
-Read target list.
+## 2. Architecture: The "Time-Event-State-Loop"
 
-Scrape/Scan for signal.
+**Time:** Triggered via CLI (`python main.py`) or daily cron (`run_daily.sh`).
 
-If signal == True, generate Email Draft via LLM.
+**Event (Triggers):**
+- **Hiring Signal:** High-value keywords detected on a company's careers page (VP, Director, Head of, CISO, CTO, AI, etc.)
+- **Prospect Signal:** Business opportunity detected via web search or news page scraping (new model launch, EV transition, service challenge, regulatory change)
 
-Save Draft to Output (Slack/CSV).
+**State (Memory):** `data/db.json` tracks per-company scan history with independent 24h cooldowns for hiring and prospect scans.
 
-3. Tech Stack & Tools
-Language: Python 3.9+
+**Loop (Action):**
+1. Read target list from `targets.csv`
+2. Check state (skip recently scanned companies)
+3. **Hiring pipeline:** Scrape careers pages, analyze for hiring keywords
+4. **Prospect pipeline:** Search Brave API + scrape company newsrooms for business signals
+5. Generate email drafts via LLM (with false-positive filtering)
+6. Save drafts to CSV + markdown, send Slack notifications
+7. Email daily report via Gmail
+8. Update state in `db.json`
 
-Scraping: requests, BeautifulSoup4 (or ZenRows/Firecrawl if JS rendering is needed).
+## 3. Tech Stack
 
-LLM: openai (GPT-4o) or google-generativeai (Gemini Pro).
+- **Language:** Python 3.13 (requires >=3.11), venv at `.venv/`
+- **Build:** hatchling via `pyproject.toml`, installed editable
+- **Scraping:** `requests`, `BeautifulSoup4`
+- **Web Search:** Brave Search API (optional, for prospect intelligence)
+- **LLM:** `litellm` (multi-provider: OpenAI, Anthropic, Gemini, etc.)
+- **State:** Local JSON (`data/db.json`)
+- **Notifications:** Slack webhooks (optional), Gmail SMTP (optional)
+- **Agent Framework:** Forked from HKUDS/nanobot (~4k lines)
 
-Database (MVP): tinydb (local JSON) or pandas (CSV/Excel).
+## 4. Project Structure
 
-Notifications: slack_sdk (Webhooks) or simply append to CSV.
+```
+SignalSDR/
+├── main.py                          # CLI orchestration (hiring + prospect pipelines)
+├── targets.csv                      # Target companies — gitignored (copy targets.example.csv)
+├── targets.example.csv              # Example targets file (committed)
+├── run_daily.sh                     # Cron wrapper script
+├── data/
+│   ├── db.json                      # State tracking — gitignored (copy db.example.json)
+│   └── db.example.json              # Empty state template (committed)
+├── drafts_output.csv                # Output: email drafts for review (gitignored)
+├── drafts_output.md                 # Output: readable markdown (gitignored)
+├── signalsdr/                       # Business logic package
+│   ├── config.py                    # Keywords, categories, rate limits
+│   ├── scraper.py                   # BeautifulSoup page fetcher
+│   ├── analyzer.py                  # Keyword signal detection (hiring)
+│   ├── prospector.py                # Brave Search + news page scraping (prospect)
+│   ├── drafter.py                   # LLM email drafter via litellm
+│   ├── output.py                    # CSV/markdown writer, Slack, Gmail
+│   └── state.py                     # db.json state management (24h cooldown)
+├── nanobot/                         # Forked nanobot framework
+│   ├── agent/
+│   │   ├── loop.py                  # Agent loop (registers tools)
+│   │   └── tools/
+│   │       ├── career_scanner.py    # Nanobot tool: hiring signal scanner
+│   │       └── prospect_scanner.py  # Nanobot tool: prospect signal scanner
+│   └── skills/
+│       └── signalsdr/
+│           └── SKILL.md             # Nanobot skill (always=true)
+├── .env                             # API keys (gitignored, copy .env.example)
+└── .env.example                     # Placeholder API keys (committed)
+```
 
-4. Data Structure (db.json Schema)
-The agent needs a simple memory to avoid re-scanning the same company every hour.
+## 5. Data Structures
 
-JSON
+### targets.csv
+```csv
+company,domain,careers_url,news_url
+Ford,ford.com,https://ford.com/careers/,https://media.ford.com/
+Toyota,toyota.com,https://toyota.com/careers/,https://pressroom.toyota.com/
+```
+
+### db.json
+```json
 {
   "companies": [
     {
       "id": "c_001",
-      "name": "Acme Corp",
-      "domain": "acme.com",
-      "careers_url": "https://acme.com/careers",
-      "last_scan": "2026-02-07T09:00:00Z",
-      "status": "active",
+      "name": "Ford",
+      "domain": "ford.com",
+      "last_scan": "2026-02-09T20:00:00+00:00",
+      "last_prospect_scan": "2026-02-09T20:05:00+00:00",
+      "status": "signal_found",
       "signals": [
-        {
-          "date": "2026-02-07",
-          "type": "hiring",
-          "details": "Found role: Director of Security"
-        }
+        {"date": "2026-02-09", "type": "hiring", "details": "Found role: VP of Engineering"},
+        {"date": "2026-02-09", "type": "prospect_ev_transition", "details": "Ford announces new EV platform"}
       ]
     }
   ]
 }
-5. Core Features & Logic
-Feature A: The Scanner (Event Detection)
-Input: A list of target URLs (e.g., targets.csv).
+```
 
-Logic:
+## 6. Feature Details
 
-Fetch HTML content of careers_url.
+### Feature A: Hiring Scanner
+- **Input:** `careers_url` from targets.csv
+- **Logic:** Fetch HTML via `requests` + `BeautifulSoup`, extract text, match against `SIGNAL_KEYWORDS` (VP, Director, Head of, CISO, CTO, AI, etc.) using word-boundary regex to avoid false positives, filter out `EXCLUDE_KEYWORDS` (Intern, Associate, Junior, Social Security)
+- **Output:** List of `Signal` objects with keyword + matched text
 
-Filter text for specific "high-value" keywords defined in a config list: ["VP", "Director", "Head of", "Security", "AI"].
+### Feature B: Prospect Intelligence
+Two signal sources:
+1. **Brave Search API** (if `BRAVE_API_KEY` set): Queries 4 categories per company with freshness filter (past week)
+2. **News page scraping** (if `news_url` configured): Fetches company blog/newsroom, matches against `NEWS_PAGE_KEYWORDS` mapped to categories. Quality filters skip tag lists, WLTP/emissions disclaimers, and generic site chrome.
 
-Constraint: Ignore generic roles like "Intern" or "Associate".
+**Prospect categories (Tweddle-specific):**
+- `new_model` — new vehicle/product/equipment launches
+- `service_challenge` — technician shortages, recalls, warranty, parts supply
+- `ev_transition` — electrification, battery, hybrid transitions
+- `regulatory` — safety standards, emissions, right-to-repair
 
-Feature B: The Drafter (LLM Integration)
-System Prompt:
+**Signal cap:** Max 5 signals per company (`MAX_PROSPECT_SIGNALS_PER_COMPANY`). When a company has more signals (e.g., a large newsroom archive), the pipeline prioritizes category diversity — taking the first signal from each category before filling remaining slots.
 
-"You are an expert SDR. Your goal is to write a short, 3-sentence cold email. Context: We sell AI Security software. Trigger: The company is hiring for [Role Found]. Task: Connect the hiring of this role to the value of securing their new AI initiatives. Tone: Professional, direct, no fluff."
+### Feature C: LLM Email Drafter
+- **Provider:** `litellm` (supports OpenAI, Anthropic, Gemini via `--model` flag)
+- **Hiring prompt:** Connects the detected role to how Tweddle can support documentation, service, or training needs
+- **Prospect prompt:** Connects business signal to specific Tweddle offering (documentation for new models, diagnostics for service challenges, training for EV transitions, compliance documentation for regulatory changes)
+- **False-positive filter:** LLM returns `{subject_line: null, body: null}` for irrelevant signals (diversity statements, tag lines, spam)
 
-Input: The detected role (e.g., "VP of AI").
+### Feature D: Output & Reporting
+- `drafts_output.csv` — structured output with signal_type, company, role, draft, status
+- `drafts_output.md` — readable markdown with category badges (reset per run)
+- Slack webhook notifications (optional)
+- Gmail email report after each run with emoji subject line and draft/signal counts
 
-Output: A JSON object containing { "subject_line": "...", "body": "..." }.
+## 7. CLI Usage
 
-Feature C: The Output (Headless Reporting)
-Action:
+```bash
+python main.py                          # Run hiring + prospect
+python main.py --prospect-only          # Prospect pipeline only
+python main.py --no-prospect            # Hiring pipeline only
+python main.py --dry-run                # Scan only, no LLM drafts
+python main.py --model anthropic/claude-sonnet-4-5  # Use Claude
+python main.py --no-email               # Skip email report
+python main.py --targets custom.csv     # Custom target file
+```
 
-If a draft is generated, append a row to results.csv:
+## 8. Environment Variables (.env)
 
-Company, Role Detected, Draft Subject, Draft Body, Status: PENDING_REVIEW
+```
+OPENAI_API_KEY=sk-...              # Required: LLM provider
+BRAVE_API_KEY=...                  # Optional: prospect web search
+SLACK_WEBHOOK_URL=...              # Optional: Slack notifications
+GMAIL_ADDRESS=you@gmail.com        # Optional: email reports
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx  # Optional: Gmail App Password
+GMAIL_RECIPIENT=team@company.com   # Optional: defaults to GMAIL_ADDRESS
+```
 
-(Optional) Send a message to a Slack channel via Webhook:
+## 9. Safety Guardrails
 
-"🚨 Signal Detected: Acme Corp is hiring a VP of AI. [Draft Created]"
+- **Read-only output:** The agent never sends outreach emails. It only writes drafts for human review.
+- **Rate limiting:** `time.sleep(2)` between scrapes to avoid IP bans. Brave Search queries are spaced 1.1s apart to stay within the free tier rate limit (~1 req/sec).
+- **24h cooldown:** Independent per-company cooldowns for hiring and prospect scans prevent redundant scanning.
+- **Dry-run isolation:** `--dry-run` mode scans pages and detects signals but does not call the LLM or update state in `db.json`, so cooldowns are not consumed.
+- **Word-boundary matching:** Hiring keyword regex uses `\b` word boundaries to prevent false positives (e.g., "AI" matching inside "Français" or "paid").
+- **Signal cap:** Prospect pipeline limits to 5 signals per company with category-diverse selection, preventing runaway LLM costs from large newsroom archives.
+- **Newsroom quality filters:** Skips comma-separated tag lists (e.g., "Electrification,Sustainability"), WLTP/emissions disclaimers (kWh/100km, g/km, CO2), generic site chrome (cookie banners, privacy policies), and lines under 25 characters.
+- **LLM hallucination check:** Prompts include explicit instructions to return null for non-genuine signals.
+- **Sandbox mode:** Nanobot's `restrictToWorkspace: true` limits file access to the project directory.
+- **No secrets in git:** `.env` is gitignored; `.env.example` has placeholder values only.
 
-6. Safety Guardrails (Crucial)
-Read-Only Output: The agent never sends emails. It only writes to a CSV/Log.
+## 10. Nanobot Integration
 
-Rate Limiting: Add a time.sleep(2) between scrapes to avoid IP bans.
+### Tools
+- `career_scanner(url, company)` — wraps scraper + analyzer for interactive use
+- `prospect_scanner(company, domain, categories?)` — wraps Brave Search + news scraping
 
-Hallucination Check: The LLM prompt must include: "If no relevant role is found, return NULL. Do not invent a role."
+### Skill (SKILL.md)
+- `always: true` — loaded into every agent context
+- Documents both tools with examples and workflow instructions
+- Includes Tweddle Group context and email drafting rules
+- Workflow: Signal Detection → Context Gathering (Deep Dive) → Drafting → Summary
 
-7. MVP Implementation Steps (For the AI Assistant)
-Setup: Create a virtual env and install requests, beautifulsoup4, openai, python-dotenv.
+## 11. Daily Cron
 
-Config: Create a .env file for API keys.
+```bash
+# run_daily.sh
+#!/bin/bash
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+echo "=== SignalSDR run: $(date) ===" >> data/signalsdr.log
+.venv/bin/python main.py >> data/signalsdr.log 2>&1
+```
 
-Scraper: Write scraper.py to fetch a URL and return text.
-
-Analyzer: Write analyzer.py to detect keywords in that text.
-
-Generator: Write agent.py to send the detected signal to the LLM and get a draft.
-
-Main Loop: Create main.py that iterates through targets.csv and runs the flow.
-
-Output: Save valid results to drafts_output.csv.
-
-Our Spec (SignalSDR)Nanobot ImplementationWhy this mattersTime (Events)Smart Daily Routine ManagerIt has built-in cron/schedule handling (schedule_tasks). You don't need to write the loop; you just define the schedule.State (Context)Personal Knowledge AssistantIt uses a lightweight local memory (likely RAG/JSON) to store user context, just like our db.json idea.Events (Triggers)Integrations (Discord/Slack)It listens for messages. For SignalSDR, we just swap "Discord Message" for "Hiring Signal."Loop (Action)Providers (OpenAI/DeepSeek)It abstracts the LLM call. You just plug in vllm or openai and it handles the prompt plumbing.
-
-Since Nanobot already exists, we should fork it rather than writing scraper.py from scratch. It solves the "boring" parts of the infrastructure for us.
-
-Instead of writing a new main.py, we can write a "Skill" for Nanobot.
-
-How to build SignalSDR inside Nanobot:
-1. The "Signal" becomes a Custom Tool Nanobot likely has a tools/ directory. We add hiring_scanner.py there.
-
-Python
-# tools/hiring_scanner.py
-def check_careers_page(url: str):
-    """Scrapes a URL for 'Head of Sales' roles."""
-    # ... (Our BeautifulSoup logic from before) ...
-    return found_roles
-2. The "Routine" becomes a Config Nanobot uses a config file (probably config.json or YAML). We just tell it to run our tool every morning.
-
-JSON
-"scheduled_tasks": [
-  {
-    "time": "08:00",
-    "prompt": "Run the 'check_careers_page' tool for all domains in 'targets.csv'. If you find a role, draft an email."
-  }
-]
-3. The "State" is Free Nanobot already manages conversation history. If the agent drafted an email yesterday, it (theoretically) remembers it today, so we don't need to build a complex db.json from scratch.
-
-3. The Security Upgrade (Crucial)
-You noticed the "Security Nightmare" article earlier. Nanobot explicitly addresses this in its README:
-
-Sandbox Mode: It mentions "restrictToWorkspace": true. This forces the agent to only read/write files in a specific folder.
-
-Why this saves us: If our SignalSDR agent goes rogue (hallucinates), it can't delete your hard drive. It can only mess up files in its sandbox folder.
+Cron entry: `0 12 * * * "/path/to/SignalSDR/run_daily.sh"`
+(Requires Full Disk Access for cron on macOS)

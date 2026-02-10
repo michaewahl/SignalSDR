@@ -20,6 +20,8 @@ poetry.lock
 tests/
 
 # SignalSDR runtime data
+targets.csv
+data/db.json
 drafts_output.csv
 drafts_output.md
 data/signalsdr.log

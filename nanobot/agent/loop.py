@@ -19,6 +19,7 @@ from nanobot.agent.tools.message import MessageTool
 from nanobot.agent.tools.spawn import SpawnTool
 from nanobot.agent.tools.cron import CronTool
 from nanobot.agent.tools.career_scanner import CareerScannerTool
+from nanobot.agent.tools.prospect_scanner import ProspectScannerTool
 from nanobot.agent.subagent import SubagentManager
 from nanobot.session.manager import SessionManager
 
@@ -108,8 +109,9 @@ class AgentLoop:
         if self.cron_service:
             self.tools.register(CronTool(self.cron_service))
 
-        # SignalSDR career scanner tool
+        # SignalSDR tools
         self.tools.register(CareerScannerTool())
+        self.tools.register(ProspectScannerTool())
     
     async def run(self) -> None:
         """Run the agent loop, processing messages from the bus."""

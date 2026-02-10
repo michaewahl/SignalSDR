@@ -30,18 +30,28 @@ def _save_db(db: dict, db_path: Path) -> None:
         json.dump(db, f, indent=2, ensure_ascii=False)
 
 
-def should_scan(domain: str, db_path: Path = DEFAULT_DB_PATH) -> bool:
+def should_scan(
+    domain: str,
+    db_path: Path = DEFAULT_DB_PATH,
+    scan_type: str = "hiring",
+) -> bool:
     """
     Check if a company should be scanned based on cooldown.
 
     Returns True if the company hasn't been scanned, or if
     the last scan was more than RESCAN_COOLDOWN_HOURS ago.
+
+    Args:
+        domain: Company domain (unique key).
+        db_path: Path to db.json.
+        scan_type: "hiring" or "prospect" — tracked independently.
     """
     db = _load_db(db_path)
+    ts_key = "last_scan" if scan_type == "hiring" else "last_prospect_scan"
 
     for company in db["companies"]:
         if company.get("domain") == domain:
-            last_scan = company.get("last_scan")
+            last_scan = company.get(ts_key)
             if not last_scan:
                 return True
             last_dt = datetime.fromisoformat(last_scan)
@@ -57,6 +67,7 @@ def record_scan(
     company_name: str,
     signals: list[dict],
     db_path: Path = DEFAULT_DB_PATH,
+    scan_type: str = "hiring",
 ) -> None:
     """
     Record a completed scan in the state database.
@@ -68,9 +79,11 @@ def record_scan(
         company_name: Human-readable company name.
         signals: List of signal dicts (keyword, matched_text).
         db_path: Path to db.json.
+        scan_type: "hiring" or "prospect" — stored separately.
     """
     db = _load_db(db_path)
     now = datetime.now(timezone.utc).isoformat()
+    ts_key = "last_scan" if scan_type == "hiring" else "last_prospect_scan"
 
     # Find existing entry or create new
     existing = None
@@ -79,17 +92,27 @@ def record_scan(
             existing = company
             break
 
-    signal_records = [
-        {
-            "date": now[:10],
-            "type": "hiring",
-            "details": f"Found role: {s.get('matched_text', s.get('keyword', 'unknown'))}",
-        }
-        for s in signals
-    ]
+    if scan_type == "prospect":
+        signal_records = [
+            {
+                "date": now[:10],
+                "type": f"prospect_{s.get('category', 'unknown')}",
+                "details": s.get("headline", s.get("snippet", "unknown")),
+            }
+            for s in signals
+        ]
+    else:
+        signal_records = [
+            {
+                "date": now[:10],
+                "type": "hiring",
+                "details": f"Found role: {s.get('matched_text', s.get('keyword', 'unknown'))}",
+            }
+            for s in signals
+        ]
 
     if existing:
-        existing["last_scan"] = now
+        existing[ts_key] = now
         existing["status"] = "signal_found" if signals else "no_signal"
         if signals:
             existing.setdefault("signals", []).extend(signal_records)
@@ -98,7 +121,7 @@ def record_scan(
             "id": f"c_{len(db['companies']) + 1:03d}",
             "name": company_name,
             "domain": domain,
-            "last_scan": now,
+            ts_key: now,
             "status": "signal_found" if signals else "no_signal",
             "signals": signal_records,
         }

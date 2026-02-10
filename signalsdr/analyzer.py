@@ -76,7 +76,7 @@ def analyze_text(
             continue
 
         for keyword in keywords:
-            pattern = re.compile(re.escape(keyword), re.IGNORECASE)
+            pattern = re.compile(r"\b" + re.escape(keyword) + r"\b", re.IGNORECASE)
             if pattern.search(line):
                 result.signals.append(
                     Signal(
