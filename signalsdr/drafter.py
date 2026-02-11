@@ -68,12 +68,12 @@ Tone: Professional, direct, no fluff.
 CRITICAL RULE: Analyze the "Hiring Signal" text carefully.
 If the text is NOT a real job listing — for example, it is a diversity statement, \
 footer text, generic marketing copy, a "Board of Directors" page, a fraud warning, \
-or any other non-hiring content — you MUST return: {{"subject_line": null, "body": null}}
+or any other non-hiring content — you MUST return: {{{{"subject_line": null, "body": null}}}}
 Do not hallucinate a job opening. Do not invent a role.
 Only draft an email when the signal clearly indicates an open position being hired for.
 
 You MUST respond with valid JSON only, no markdown, no explanation:
-{{"subject_line": "...", "body": "..."}}
+{{{{"subject_line": "...", "body": "..."}}}}
 """
 
 PROSPECT_SYSTEM_PROMPT = f"""\
@@ -104,11 +104,11 @@ Tone: Professional, direct, reference the specific signal. No fluff.
 
 CRITICAL RULE: Analyze the signal carefully.
 If the headline/snippet is clearly irrelevant (unrelated company, spam, \
-generic news aggregation) — return: {{"subject_line": null, "body": null}}
+generic news aggregation) — return: {{{{"subject_line": null, "body": null}}}}
 Only draft when the signal is genuinely about {{company}}.
 
 You MUST respond with valid JSON only, no markdown, no explanation:
-{{"subject_line": "...", "body": "..."}}
+{{{{"subject_line": "...", "body": "..."}}}}
 """
 
 
