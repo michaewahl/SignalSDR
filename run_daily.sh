@@ -11,8 +11,8 @@ export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
 # Brief pause to let OneDrive finish any filesystem sync
 sleep 5
 
-# Activate venv explicitly to avoid site module init errors
-source .venv/bin/activate
+# Activate venv from local disk (not OneDrive) to avoid filesystem lock hangs
+source "$HOME/.signalsdr-venv/bin/activate"
 
 echo "=== SignalSDR run: $(date) ===" >> data/signalsdr.log
 python main.py >> data/signalsdr.log 2>&1
