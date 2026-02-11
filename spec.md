@@ -202,9 +202,12 @@ GMAIL_RECIPIENT=team@company.com   # Optional: defaults to GMAIL_ADDRESS
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
+export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
+sleep 5  # let OneDrive finish filesystem sync
+source .venv/bin/activate
 echo "=== SignalSDR run: $(date) ===" >> data/signalsdr.log
-.venv/bin/python main.py >> data/signalsdr.log 2>&1
+python main.py >> data/signalsdr.log 2>&1
 ```
 
-Cron entry: `0 12 * * * "/path/to/SignalSDR/run_daily.sh"`
+Cron entry: `0 6 * * * "/path/to/SignalSDR/run_daily.sh"`
 (Requires Full Disk Access for cron on macOS)
