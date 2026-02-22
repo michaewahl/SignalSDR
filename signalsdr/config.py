@@ -48,6 +48,7 @@ PROSPECT_CATEGORIES = {
     "service_challenge": '"{company}" service operations OR technician shortage OR parts supply OR recall OR warranty',
     "ev_transition": '"{company}" electric vehicle OR EV OR electrification OR battery OR hybrid transition',
     "regulatory": '"{company}" regulation OR compliance OR safety standard OR emissions OR right to repair',
+    "ai_adoption": '"{company}" artificial intelligence OR AI deployment OR machine learning OR generative AI OR AI features OR software-defined',
 }
 
 # Keywords for scanning company news/blog pages directly (maps keyword → category)
@@ -84,6 +85,16 @@ NEWS_PAGE_KEYWORDS = {
     "emissions": "regulatory",
     "right to repair": "regulatory",
     "NHTSA": "regulatory",
+    # ai_adoption
+    "artificial intelligence": "ai_adoption",
+    "machine learning": "ai_adoption",
+    "generative AI": "ai_adoption",
+    "AI platform": "ai_adoption",
+    "AI features": "ai_adoption",
+    "software-defined vehicle": "ai_adoption",
+    "digital transformation": "ai_adoption",
+    "connected vehicle": "ai_adoption",
+    "over-the-air": "ai_adoption",
 }
 
 # Brave Search freshness filter: "pd" = past day, "pw" = past week, "pm" = past month

@@ -60,7 +60,7 @@ prospect_scanner(company="John Deere", domain="deere.com")
 
 Optionally filter to specific categories:
 ```
-prospect_scanner(company="Ford", domain="ford.com", categories=["ev_transition", "new_model"])
+prospect_scanner(company="Ford", domain="ford.com", categories=["ev_transition", "ai_adoption"])
 ```
 
 Categories:
@@ -68,6 +68,7 @@ Categories:
 - **service_challenge** — technician shortages, parts supply issues, recalls, warranty problems
 - **ev_transition** — electrification, battery tech, hybrid transitions
 - **regulatory** — safety standards, emissions rules, right-to-repair legislation
+- **ai_adoption** — AI/ML deployment, software-defined vehicles, connected vehicle features, over-the-air updates, digital transformation
 
 Returns:
 ```json

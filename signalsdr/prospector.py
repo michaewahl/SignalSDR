@@ -28,7 +28,7 @@ from signalsdr.config import (
 class ProspectSignal:
     """A single prospect signal."""
 
-    category: str  # new_model, service_challenge, ev_transition, regulatory
+    category: str  # new_model, service_challenge, ev_transition, regulatory, ai_adoption
     headline: str
     snippet: str
     source_url: str

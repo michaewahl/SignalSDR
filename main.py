@@ -49,10 +49,10 @@ def load_targets(csv_path: str | Path) -> list[dict]:
             target = {
                 "company": row["company"].strip(),
                 "domain": row["domain"].strip(),
-                "careers_url": row["careers_url"].strip(),
+                "careers_url": (row.get("careers_url") or "").strip(),
             }
             # Optional news/blog URL for direct scraping
-            news_url = row.get("news_url", "").strip()
+            news_url = (row.get("news_url") or "").strip()
             if news_url:
                 target["news_url"] = news_url
             targets.append(target)

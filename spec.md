@@ -132,13 +132,14 @@ Two signal sources:
 - `service_challenge` — technician shortages, recalls, warranty, parts supply
 - `ev_transition` — electrification, battery, hybrid transitions
 - `regulatory` — safety standards, emissions, right-to-repair
+- `ai_adoption` — AI/ML deployment, software-defined vehicles, connected vehicle, over-the-air updates, digital transformation
 
 **Signal cap:** Max 5 signals per company (`MAX_PROSPECT_SIGNALS_PER_COMPANY`). When a company has more signals (e.g., a large newsroom archive), the pipeline prioritizes category diversity — taking the first signal from each category before filling remaining slots.
 
 ### Feature C: LLM Email Drafter
 - **Provider:** `litellm` (supports OpenAI, Anthropic, Gemini via `--model` flag)
-- **Hiring prompt:** Connects the detected role to how your company can support documentation, service, or training needs
-- **Prospect prompt:** Connects business signal to a specific company offering (documentation for new models, diagnostics for service challenges, training for EV transitions, compliance documentation for regulatory changes)
+- **Hiring prompt:** Frames each hire as an organizational shift. Pitches your company as the partner that lets the new capability scale across the whole org — not just support one team. Requires active verbs (build, deploy, scale, ship, create). Bans vague phrases like "enhance" or "streamline."
+- **Prospect prompt:** Signal-specific framing per category — new models need documentation + parts catalogs built before day one; service challenges call for multiplying existing technicians with AI-assisted diagnostics; AI adoption signals prompt content + training that scales AI rollout org-wide. All pitches anchor to top-line business impact.
 - **False-positive filter:** LLM returns `{subject_line: null, body: null}` for irrelevant signals (diversity statements, tag lines, spam)
 
 ### Feature D: Output & Reporting
@@ -195,19 +196,32 @@ GMAIL_RECIPIENT=team@company.com   # Optional: defaults to GMAIL_ADDRESS
 - Includes company context and email drafting rules
 - Workflow: Signal Detection → Context Gathering (Deep Dive) → Drafting → Summary
 
-## 11. Daily Cron
+## 11. Daily Automation (macOS launchd)
 
-```bash
-# run_daily.sh
-#!/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
-export PATH="/usr/local/bin:/usr/bin:/bin:$PATH"
-sleep 5  # let OneDrive finish filesystem sync
-source .venv/bin/activate
-echo "=== SignalSDR run: $(date) ===" >> data/signalsdr.log
-python main.py >> data/signalsdr.log 2>&1
+SignalSDR runs daily at 6am via **launchd** (not cron). launchd is preferred over cron on macOS because it retries missed jobs after sleep/wake.
+
+**LaunchAgent plist** at `~/Library/LaunchAgents/com.signalsdr.daily.plist`:
+
+```xml
+<key>ProgramArguments</key>
+<array>
+    <string>/bin/bash</string>
+    <string>-c</string>
+    <string>cd "$HOME/.../SignalSDR" &amp;&amp; sleep 5 &amp;&amp; echo "=== SignalSDR run: $(date) ===" >> data/signalsdr.log &amp;&amp; "$HOME/.signalsdr-venv/bin/python" main.py >> data/signalsdr.log 2&gt;&amp;1</string>
+</array>
 ```
 
-Cron entry: `0 6 * * * "/path/to/SignalSDR/run_daily.sh"`
-(Requires Full Disk Access for cron on macOS)
+**Key design decisions:**
+- Uses `~/.signalsdr-venv/bin/python` directly — avoids `source activate` which can cause Python site-module deadlocks in launchd's non-interactive shell
+- Logs to `data/signalsdr.log` (within project) + `/tmp/signalsdr-launchd.log` (launchd stdout/stderr)
+- `sleep 5` lets OneDrive sync finish before scanning starts
+- `StartCalendarInterval` fires at 6:00am; missed runs execute on next wake
+
+**Install/reinstall:**
+```bash
+launchctl unload ~/Library/LaunchAgents/com.signalsdr.daily.plist
+launchctl load ~/Library/LaunchAgents/com.signalsdr.daily.plist
+launchctl list | grep signalsdr  # exit code should be 0
+```
+
+**Important:** The Python venv must be on local disk (not OneDrive) to avoid filesystem lock hangs. Default location: `~/.signalsdr-venv`. Symlink into project: `ln -s ~/.signalsdr-venv .venv`.
