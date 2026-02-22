@@ -62,7 +62,7 @@ Plus two **nanobot tools** (`career_scanner.py`, `prospect_scanner.py`) and a **
 
 ### Key Numbers (Live Run — Feb 21, 2026 — first run with ai_adoption category)
 - New `ai_adoption` signals detected across: Smartcar (connected vehicle), Thermoking, Waymo (world model), Toyota (humanoid robots), Hyundai (industrial AI), Audi (AI in production logistics)
-- Draft language shifted: "Scale AI Adoption Across [Company] with Tweddle Group" vs old "Enhance X with Tweddle Group's Expertise"
+- Draft language shifted: "Scale AI Adoption Across [Company] with Acme Corp" vs old "Enhance X with Acme Corp's Expertise"
 
 ---
 
