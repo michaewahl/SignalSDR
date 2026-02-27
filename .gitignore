@@ -29,3 +29,7 @@ data/signalsdr.log
 # Company-specific config (copy from *.example.* files)
 company.json
 nanobot/skills/signalsdr/SKILL.md
+
+# Competitive intelligence dashboard (private, deployed separately)
+compete-viz/
+amplify.yml
