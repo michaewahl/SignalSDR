@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
+import { AuthGate } from "@/components/auth/auth-gate";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,10 +28,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <TooltipProvider>
-          <SidebarNav />
-          <main className="ml-56 min-h-screen p-6">{children}</main>
-        </TooltipProvider>
+        <AuthGate>
+          <TooltipProvider>
+            <SidebarNav />
+            <main className="ml-56 min-h-screen p-6">{children}</main>
+          </TooltipProvider>
+        </AuthGate>
       </body>
     </html>
   );

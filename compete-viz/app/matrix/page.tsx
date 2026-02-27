@@ -19,12 +19,12 @@ export default function MatrixPage() {
   const filtered = allData
     .filter((r) => {
       if (search && !r.name.toLowerCase().includes(search.toLowerCase())) return false;
-      if (categoryFilter !== "all" && r.category !== categoryFilter && !r.is_tweddle) return false;
+      if (categoryFilter !== "all" && r.category !== categoryFilter && !r.is_self) return false;
       return true;
     })
     .sort((a, b) => {
-      if (a.is_tweddle) return -1;
-      if (b.is_tweddle) return 1;
+      if (a.is_self) return -1;
+      if (b.is_self) return 1;
       const aTotal = Object.values(a.scores).reduce((s, v) => s + v, 0);
       const bTotal = Object.values(b.scores).reduce((s, v) => s + v, 0);
       return bTotal - aTotal;
@@ -110,22 +110,22 @@ export default function MatrixPage() {
                   <tr
                     key={row.id}
                     className={`border-b border-border/50 transition-colors hover:bg-secondary/50 ${
-                      row.is_tweddle ? "bg-accent/5" : ""
+                      row.is_self ? "bg-accent/5" : ""
                     }`}
                   >
-                    <td className={`sticky left-0 z-10 px-4 py-2.5 ${row.is_tweddle ? "bg-accent/5" : "bg-card"}`}>
+                    <td className={`sticky left-0 z-10 px-4 py-2.5 ${row.is_self ? "bg-accent/5" : "bg-card"}`}>
                       <div className="flex items-center gap-2">
-                        {row.is_tweddle && (
+                        {row.is_self && (
                           <div className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse-gold" />
                         )}
-                        {row.is_tweddle ? (
+                        {row.is_self ? (
                           <span className="text-sm font-bold text-accent">{row.name}</span>
                         ) : (
                           <Link href={`/competitor/${row.id}`} className="text-sm font-medium hover:text-primary transition-colors">
                             {row.name}
                           </Link>
                         )}
-                        {!row.is_tweddle && (
+                        {!row.is_self && (
                           <Badge
                             variant="outline"
                             className="text-[9px] px-1 py-0"
@@ -165,7 +165,7 @@ export default function MatrixPage() {
                       );
                     })}
                     <td className="px-3 py-2.5 text-center">
-                      <span className={`text-sm font-bold font-mono ${row.is_tweddle ? "text-accent" : ""}`}>
+                      <span className={`text-sm font-bold font-mono ${row.is_self ? "text-accent" : ""}`}>
                         {total}
                       </span>
                     </td>

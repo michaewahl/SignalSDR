@@ -57,11 +57,11 @@ export interface Competitor {
   key_products: string[];
   strengths: string[];
   weaknesses: string[];
-  tweddle_advantages: string[];
-  tweddle_gaps: string[];
+  our_advantages: string[];
+  our_gaps: string[];
   notes?: string;
   last_updated: string;
-  is_tweddle?: boolean;
+  is_self?: boolean;
 }
 
 export interface CompetitiveDataset {
@@ -71,7 +71,7 @@ export interface CompetitiveDataset {
     compiled_by: string;
     total_competitors: number;
   };
-  tweddle: Competitor;
+  self: Competitor;
   competitors: Competitor[];
 }
 
@@ -81,7 +81,7 @@ export interface HeatmapRow {
   category: CompetitorCategory;
   threat_level: ThreatLevel;
   scores: CapabilityProfile;
-  is_tweddle?: boolean;
+  is_self?: boolean;
 }
 
 export interface QuadrantPoint {
@@ -90,5 +90,5 @@ export interface QuadrantPoint {
   x: number;
   y: number;
   category: CompetitorCategory;
-  is_tweddle?: boolean;
+  is_self?: boolean;
 }

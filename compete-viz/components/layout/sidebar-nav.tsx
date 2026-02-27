@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/constants";
+import { getCompanyName } from "@/lib/company";
+import { useAuth } from "@/components/auth/auth-provider";
 import {
   LayoutDashboard,
   Grid3X3,
@@ -10,6 +12,7 @@ import {
   Layers,
   ShieldAlert,
   ArrowLeftRight,
+  LogOut,
 } from "lucide-react";
 
 const icons = {
@@ -23,6 +26,7 @@ const icons = {
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-56 flex-col border-r border-border bg-sidebar">
@@ -52,11 +56,18 @@ export function SidebarNav() {
           );
         })}
       </nav>
-      <div className="border-t border-border p-3">
+      <div className="border-t border-border p-3 space-y-2">
         <div className="rounded-md bg-accent/10 px-3 py-2">
-          <p className="text-[10px] font-medium text-accent">TWEDDLE GROUP</p>
+          <p className="text-[10px] font-medium text-accent">{getCompanyName().toUpperCase()}</p>
           <p className="text-[10px] text-muted-foreground">53 competitors tracked</p>
         </div>
+        <button
+          onClick={logout}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+        >
+          <LogOut className="h-3 w-3" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );

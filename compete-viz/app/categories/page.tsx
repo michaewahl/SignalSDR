@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { getByCategory, getTweddle } from "@/lib/data";
+import { getByCategory, getSelf } from "@/lib/data";
+import { getShortName } from "@/lib/company";
 import { CATEGORY_LABELS, CATEGORY_COLORS, CAPABILITY_LABELS, THREAT_COLORS, HEATMAP_COLORS } from "@/lib/constants";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +13,8 @@ import type { CompetitorCategory, ProductCategory } from "@/lib/types";
 
 export default function CategoriesPage() {
   const categories = Object.keys(CATEGORY_LABELS) as CompetitorCategory[];
-  const tweddle = getTweddle();
+  const self = getSelf();
+  const shortName = getShortName();
 
   return (
     <div className="space-y-6">
@@ -70,7 +72,7 @@ export default function CategoriesPage() {
                     <div className="mt-3 grid grid-cols-5 gap-2">
                       {(Object.keys(CAPABILITY_LABELS) as ProductCategory[]).map((dim) => {
                         const score = c.capabilities[dim];
-                        const tweddleScore = tweddle.capabilities[dim];
+                        const selfScore = self.capabilities[dim];
                         return (
                           <div key={dim} className="space-y-1">
                             <div className="flex items-center justify-between">
@@ -90,8 +92,8 @@ export default function CategoriesPage() {
                                 />
                               ))}
                             </div>
-                            {score > tweddleScore && (
-                              <p className="text-[9px] text-destructive">▲ beats Tweddle</p>
+                            {score > selfScore && (
+                              <p className="text-[9px] text-destructive">▲ beats {shortName}</p>
                             )}
                           </div>
                         );

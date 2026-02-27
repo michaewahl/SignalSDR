@@ -17,9 +17,9 @@ import {
 } from "recharts";
 import type { CompetitorCategory } from "@/lib/types";
 
-function CustomDot(props: { cx?: number; cy?: number; payload?: { is_tweddle?: boolean; category: CompetitorCategory } }) {
+function CustomDot(props: { cx?: number; cy?: number; payload?: { is_self?: boolean; category: CompetitorCategory } }) {
   const { cx = 0, cy = 0, payload } = props;
-  if (payload?.is_tweddle) {
+  if (payload?.is_self) {
     return (
       <g>
         <circle cx={cx} cy={cy} r={10} fill="oklch(0.795 0.184 86)" stroke="oklch(0.795 0.184 86)" strokeWidth={2} opacity={0.3} />
@@ -31,12 +31,12 @@ function CustomDot(props: { cx?: number; cy?: number; payload?: { is_tweddle?: b
   return <circle cx={cx} cy={cy} r={5} fill={color} stroke={color} strokeWidth={1} opacity={0.8} />;
 }
 
-function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; x: number; y: number; category: CompetitorCategory; is_tweddle?: boolean } }> }) {
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; x: number; y: number; category: CompetitorCategory; is_self?: boolean } }> }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
     <div className="rounded-md border border-border bg-card px-3 py-2 shadow-lg">
-      <p className={`text-sm font-bold ${d.is_tweddle ? "text-accent" : ""}`}>{d.name}</p>
+      <p className={`text-sm font-bold ${d.is_self ? "text-accent" : ""}`}>{d.name}</p>
       <p className="text-xs text-muted-foreground">{CATEGORY_LABELS[d.category]}</p>
       <div className="mt-1 grid grid-cols-2 gap-x-4 text-xs">
         <span className="text-muted-foreground">Capability:</span>
@@ -55,7 +55,7 @@ export default function QuadrantPage() {
   );
 
   const filtered = allData.filter(
-    (d) => d.is_tweddle || visibleCategories.has(d.category)
+    (d) => d.is_self || visibleCategories.has(d.category)
   );
 
   const toggleCategory = (cat: CompetitorCategory) => {

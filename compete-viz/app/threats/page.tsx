@@ -71,17 +71,17 @@ export default function ThreatsPage() {
                       <p className="text-xs text-muted-foreground">{c.description}</p>
                       <div className="grid grid-cols-2 gap-4 text-xs">
                         <div>
-                          <p className="font-medium text-chart-3 mb-1">Tweddle Advantages</p>
+                          <p className="font-medium text-chart-3 mb-1">Our Advantages</p>
                           <ul className="space-y-0.5 text-muted-foreground">
-                            {c.tweddle_advantages.map((a, i) => (
+                            {c.our_advantages.map((a, i) => (
                               <li key={i}>+ {a}</li>
                             ))}
                           </ul>
                         </div>
                         <div>
-                          <p className="font-medium text-destructive mb-1">Tweddle Gaps</p>
+                          <p className="font-medium text-destructive mb-1">Our Gaps</p>
                           <ul className="space-y-0.5 text-muted-foreground">
-                            {c.tweddle_gaps.map((g, i) => (
+                            {c.our_gaps.map((g, i) => (
                               <li key={i}>- {g}</li>
                             ))}
                           </ul>

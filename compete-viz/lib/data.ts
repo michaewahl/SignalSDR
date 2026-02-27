@@ -11,8 +11,8 @@ import type {
 
 const data = dataset as CompetitiveDataset;
 
-export function getTweddle(): Competitor {
-  return data.tweddle;
+export function getSelf(): Competitor {
+  return data.self;
 }
 
 export function getCompetitors(): Competitor[] {
@@ -20,11 +20,11 @@ export function getCompetitors(): Competitor[] {
 }
 
 export function getAllEntries(): Competitor[] {
-  return [data.tweddle, ...data.competitors];
+  return [data.self, ...data.competitors];
 }
 
 export function getCompetitorById(id: string): Competitor | undefined {
-  if (id === data.tweddle.id) return data.tweddle;
+  if (id === data.self.id) return data.self;
   return data.competitors.find((c) => c.id === id);
 }
 
@@ -77,14 +77,14 @@ export function getAverageCapabilities(): Record<ProductCategory, number> {
   ) as Record<ProductCategory, number>;
 }
 
-export function getTweddleRank(): number {
+export function getSelfRank(): number {
   const all = getAllEntries();
   const sorted = [...all].sort((a, b) => {
     const aTotal = Object.values(a.capabilities).reduce((s, v) => s + v, 0);
     const bTotal = Object.values(b.capabilities).reduce((s, v) => s + v, 0);
     return bTotal - aTotal;
   });
-  return sorted.findIndex((c) => c.is_tweddle) + 1;
+  return sorted.findIndex((c) => c.is_self) + 1;
 }
 
 export function getHeatmapData(): HeatmapRow[] {
@@ -94,7 +94,7 @@ export function getHeatmapData(): HeatmapRow[] {
     category: c.category,
     threat_level: c.threat_level,
     scores: c.capabilities,
-    is_tweddle: c.is_tweddle,
+    is_self: c.is_self,
   }));
 }
 
@@ -105,6 +105,6 @@ export function getQuadrantData(): QuadrantPoint[] {
     x: c.position.market_reach,
     y: c.position.capability,
     category: c.category,
-    is_tweddle: c.is_tweddle,
+    is_self: c.is_self,
   }));
 }
