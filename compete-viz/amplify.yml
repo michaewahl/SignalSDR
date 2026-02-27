@@ -11,6 +11,10 @@ applications:
         build:
           commands:
             - pnpm build
+      artifacts:
+        baseDirectory: out
+        files:
+          - '**/*'
       cache:
         paths:
           - .next/cache/**/*
